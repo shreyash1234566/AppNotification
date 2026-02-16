@@ -5,8 +5,10 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
     app:cardBackgroundColor="@color/card_background"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="2dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/outline"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,57 +16,82 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="12dp">
 
             <TextView
                 android:id="@+id/tvSender"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Contact"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@+id/tvStatus"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Contact Name"
+                android:textColor="@color/text_primary"
                 android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary" />
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:background="@drawable/status_badge_bg"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
                 android:text="SENT"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:textColor="@color/status_success" />
-        </LinearLayout>
+                android:textColor="@color/status_success"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
 
         <TextView
             android:id="@+id/tvMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Message content"
-            android:textSize="14sp"
+            android:layout_marginBottom="8dp"
+            android:text="Incoming message text goes here..."
             android:textColor="@color/text_secondary"
-            android:layout_marginBottom="4dp" />
+            android:textSize="14sp" />
 
-        <TextView
-            android:id="@+id/tvResponse"
+        <LinearLayout
+            android:id="@+id/responseContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Response: Auto-reply"
-            android:textSize="13sp"
-            android:textColor="@color/accent"
-            android:layout_marginBottom="4dp"
-            android:visibility="gone" />
+            android:layout_marginBottom="12dp"
+            android:background="@color/item_background"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AI RESPONSE"
+                android:textColor="@color/accent"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvResponse"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Auto-reply content..."
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvTimestamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Jan 01, 12:00:00"
-            android:textSize="11sp"
-            android:textColor="@color/text_tertiary" />
+            android:layout_gravity="end"
+            android:text="12:34 PM"
+            android:textColor="@color/text_tertiary"
+            android:textSize="11sp" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
