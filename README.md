@@ -1,62 +1,103 @@
-# WhatsApp Auto-Responder - Enhanced Edition
+# 📱 AppNotification — WhatsApp Auto-Responder
 
-## 🎯 What Was Fixed
+An Android app that listens to incoming WhatsApp notifications and automatically replies using an AI backend. When a whitelisted contact messages you, this app intercepts the notification, forwards it to [PersonalBot](https://github.com/shreyash1234566/PersonalBot), receives an AI-generated reply, and sends it back — all without you touching your phone.
 
-### Critical Issues Resolved
-1. **JSON Structure Mismatch** ✅ 
-   - Fixed to match backend format: `{"query": {"sender": "...", "message": "...", "isGroup": false}}`
-   - Your webhook now receives properly formatted requests
+> **This is the Android frontend of a two-repo system.**
+> The AI brain lives in 👉 [shreyash1234566/PersonalBot](https://github.com/shreyash1234566/PersonalBot)
 
-2. **Service Reliability** ✅
-   - Added battery optimization exemption
-   - Changed to `FOREGROUND_SERVICE_TYPE_DATA_SYNC` (Android 14 compatible)
-   - Improved service lifecycle management
+---
 
-3. **Network Timeouts** ✅
-   - Increased timeout to 30 seconds for Render cold starts
-   - Added retry logic with exponential backoff (3 attempts)
-   - Better error handling and logging
+## 🔗 How the Two Repos Work Together
 
-4. **Reply Action Issues** ✅
-   - Enhanced notification action detection
-   - Better error handling when reply action is unavailable
-   - Comprehensive logging for debugging
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Full System Flow                         │
+└─────────────────────────────────────────────────────────────────┘
 
-5. **Contact Matching** ✅
-   - Improved name normalization (removes emojis, special characters)
-   - Partial name matching support
-   - Better group message detection
+  Someone messages you on WhatsApp
+           │
+           ▼
+  ┌─────────────────────┐        POST /webhook         ┌──────────────────────┐
+  │   AppNotification   │ ─────────────────────────►  │     PersonalBot      │
+  │   (Android / Kotlin)│                              │   (Python / FastAPI) │
+  │                     │   {"query": {                │                      │
+  │  NotificationListener    "sender": "Alice",        │  RAG + ChromaDB      │
+  │  intercepts reply    │   "message": "Hey!",        │  Groq / Gemini /     │
+  │  action from WhatsApp│   "isGroup": false}}        │  Together AI         │
+  │                     │                              │  MongoDB history     │
+  │                     │ ◄─────────────────────────  │                      │
+  │                     │   {"replies": [              └──────────────────────┘
+  │   Fires reply action │    {"message": "Hey! ..."}
+  │   back into WhatsApp │   ]}
+  └─────────────────────┘
+           │
+           ▼
+  WhatsApp sends the AI reply to the contact
+```
 
-### New Features
-- **Message Log** - Track all processed messages with timestamps and status
-- **Statistics Dashboard** - View total, sent, and failed messages
-- **Pause/Resume** - Temporarily disable auto-responses
-- **Webhook Testing** - Test connectivity before going live
-- **Custom Webhook URL** - Change backend URL without recompiling
-- **Modern UI** - Material Design 3 with dark theme
+| Repo | Role | Language | Deployed On |
+|---|---|---|---|
+| [AppNotification](https://github.com/shreyash1234566/AppNotification) | Android app — intercepts notifications, fires replies | Kotlin | Your phone |
+| [PersonalBot](https://github.com/shreyash1234566/PersonalBot) | AI backend — RAG + LLM response generation | Python | Render.com |
+
+---
+
+## ✨ Features
+
+- **Notification listener** — hooks into Android's `NotificationListenerService` to catch every WhatsApp message in real time
+- **AI-powered auto-reply** — forwards messages to PersonalBot and sends the response back through WhatsApp's native reply action
+- **Contact allowlist** — only contacts you explicitly add will receive auto-replies; everyone else is ignored
+- **Pause / Resume** — one-tap switch to disable auto-responses without uninstalling
+- **Message log** — timestamped history of every processed message with sent/failed status
+- **Statistics dashboard** — total messages, successfully sent, and failed counts at a glance
+- **Webhook tester** — verify the backend is reachable before going live
+- **Custom webhook URL** — change the PersonalBot endpoint from the Settings screen without rebuilding
+- **Retry logic** — exponential backoff with 3 attempts handles Render cold starts gracefully
+- **Boot receiver** — service auto-restarts when the phone reboots
+- **Material Design 3** — clean dark-theme UI built with modern Android components
 
 ---
 
 ## 📋 Prerequisites
 
-- Android 8.0+ (API 26+)
-- WhatsApp installed
-- Kotlin 1.9+
-- Gradle 8.0+
-- Android Studio Hedgehog or later
+- Android **8.0+** (API 26+)
+- WhatsApp installed on the same device
+- [PersonalBot](https://github.com/shreyash1234566/PersonalBot) backend running (local or deployed on Render)
+- Android Studio **Hedgehog** or later
+- Kotlin **1.9+**
+- Gradle **8.0+**
 
 ---
 
-## 🚀 Setup Instructions
+## 🚀 Setup
 
-### 1. Import Project
+### 1. Clone the repo
+
 ```bash
-# Open Android Studio
-File → Open → Select WhatsAppAutoResponder_Enhanced folder
+git clone https://github.com/shreyash1234566/AppNotification.git
+cd AppNotification
 ```
 
-### 2. Update Gradle Dependencies
+### 2. Open in Android Studio
+
+```
+File → Open → Select the AppNotification folder
+```
+
+Let Gradle sync complete before making any changes.
+
+### 3. Configure the Webhook URL
+
+The app points to the PersonalBot backend by default. If you're running PersonalBot locally or on a custom domain, open `app/src/main/java/.../data/PreferencesManager.kt` and update the default, **or** just change it from the Settings screen at runtime:
+
+```
+Default: https://personalbot-kwev.onrender.com/webhook
+```
+
+### 4. Update dependencies (if needed)
+
 In `app/build.gradle.kts`:
+
 ```kotlin
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
@@ -65,20 +106,20 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
-    
+
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    
-    // HTTP Client
+
+    // HTTP client
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    
+
     // View Binding
     implementation("androidx.activity:activity-ktx:1.8.2")
 }
 ```
 
-### 3. Enable View Binding
-In `app/build.gradle.kts`:
+Also make sure View Binding is enabled:
+
 ```kotlin
 android {
     buildFeatures {
@@ -87,213 +128,180 @@ android {
 }
 ```
 
-### 4. Build and Install
+### 5. Build and install
+
 ```bash
-# Build APK
+# Build debug APK
 ./gradlew assembleDebug
 
-# Install to device
+# Install to connected device
 adb install app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ---
 
-## 📱 Usage Guide
+## 📱 First-Time Setup on Device
 
-### Initial Setup
-1. **Launch App** - Open "WhatsApp Auto-Responder"
-2. **Grant Permissions**:
-   - Tap "Enable Notification Access" → Enable the service
-   - Tap "Grant Contacts Permission" → Allow contacts access
-   - Tap "Disable Battery Optimization" (if shown)
+After installing, complete these steps in order — the app will prompt you through each one:
 
-### Add Contacts
-1. Tap the **+** button (bottom-right)
-2. Select contacts from your phone
-3. Only these contacts will receive auto-responses
-
-### Test Connection
-1. Tap "Test Webhook Connection" to verify backend is reachable
-2. Check "View Logs" to see message processing history
-
-### Customize Webhook
-1. Go to **Settings**
-2. Update webhook URL if using a different backend
-3. Save changes
-
----
-
-## 🔧 Configuration
-
-### Webhook URL
-Default: `https://personalbot-kwev.onrender.com/webhook`
-
-**Change in Settings screen or PreferencesManager:**
-```kotlin
-prefs.setWebhookUrl("https://your-backend.com/webhook")
-```
-
-### Expected Backend Response
-```json
-{
-  "replies": [
-    {"message": "Your AI-generated response here"}
-  ]
-}
-```
-
-Or:
-```json
-{
-  "message": "Your AI-generated response"
-}
-```
-
----
-
-## 🐛 Debugging
-
-### Check Service Status
-```bash
-adb logcat | grep "WA_AutoResponder"
-```
-
-### Common Issues
-
-**Service stops after a while:**
-- Ensure battery optimization is disabled
-- Check if notification access is still granted
-- Restart device and reopen app
-
-**Messages not being responded to:**
-- Verify contact is in allowed list
-- Check webhook URL is correct in Settings
-- View logs to see processing status
-- Ensure backend is running (test with webhook button)
-
-**Network errors:**
-- Check internet connection
-- Verify backend URL is accessible
-- Check backend logs for errors
+1. **Enable Notification Access** — Settings → Notification Access → toggle on *WhatsApp Auto-Responder*
+2. **Grant Contacts Permission** — required for matching sender names against your allowlist
+3. **Disable Battery Optimization** — critical; without this Android will kill the service after a few minutes
+4. **Add contacts** — tap the **+** button and select which contacts should receive auto-replies
+5. **Test the connection** — tap *Test Webhook Connection* to confirm PersonalBot is reachable
+6. **Start the service** — the dashboard will show *Active* when everything is running
 
 ---
 
 ## 📂 Project Structure
 
 ```
-WhatsAppAutoResponder_Enhanced/
-├── app/src/main/
-│   ├── java/com/whatsapp/autoresponder/
-│   │   ├── service/
-│   │   │   ├── WhatsAppNotificationService.kt  # Core notification handling
-│   │   │   └── BootReceiver.kt                 # Auto-start on boot
-│   │   ├── ui/
-│   │   │   ├── MainActivity.kt                 # Main dashboard
-│   │   │   ├── MessageLogActivity.kt           # Message history
-│   │   │   ├── SettingsActivity.kt             # Configuration
-│   │   │   └── Adapters.kt                     # RecyclerView adapters
-│   │   ├── data/
-│   │   │   ├── PreferencesManager.kt           # Settings storage
-│   │   │   └── MessageLog.kt                   # Message logging
-│   │   ├── utils/
-│   │   │   └── Utils.kt                        # Network utilities
-│   │   └── AutoResponderApplication.kt
-│   ├── res/
-│   │   ├── layout/
-│   │   │   ├── activity_main.xml               # Main screen layout
-│   │   │   ├── activity_message_log.xml
-│   │   │   ├── activity_settings.xml
-│   │   │   ├── item_contact.xml
-│   │   │   └── item_log.xml
-│   │   └── values/
-│   │       ├── colors.xml                      # Dark theme colors
-│   │       ├── strings.xml
-│   │       └── themes.xml
-│   └── AndroidManifest.xml
-└── ISSUES_ANALYSIS.md                          # Detailed issue breakdown
+AppNotification/
+├── app/
+│   └── src/main/
+│       ├── java/com/whatsapp/autoresponder/
+│       │   ├── service/
+│       │   │   ├── WhatsAppNotificationService.kt  # Core — intercepts notifications & fires replies
+│       │   │   └── BootReceiver.kt                 # Restarts service on device reboot
+│       │   ├── ui/
+│       │   │   ├── MainActivity.kt                 # Dashboard — status, stats, contact list
+│       │   │   ├── MessageLogActivity.kt           # Per-message history with timestamps
+│       │   │   ├── SettingsActivity.kt             # Webhook URL and other config
+│       │   │   └── Adapters.kt                     # RecyclerView adapters
+│       │   ├── data/
+│       │   │   ├── PreferencesManager.kt           # SharedPreferences wrapper
+│       │   │   └── MessageLog.kt                   # In-memory + persisted message log
+│       │   ├── utils/
+│       │   │   └── Utils.kt                        # OkHttp client, network helpers
+│       │   └── AutoResponderApplication.kt
+│       ├── res/
+│       │   ├── layout/
+│       │   │   ├── activity_main.xml
+│       │   │   ├── activity_message_log.xml
+│       │   │   ├── activity_settings.xml
+│       │   │   ├── item_contact.xml
+│       │   │   └── item_log.xml
+│       │   └── values/
+│       │       ├── colors.xml                      # Dark theme palette
+│       │       ├── strings.xml
+│       │       └── themes.xml
+│       └── AndroidManifest.xml
+├── QUICK_START.md
+├── ISSUES_ANALYSIS.md
+├── build.gradle.kts
+├── settings.gradle.kts
+└── gradle.properties
 ```
 
 ---
 
-## 🎨 UI/UX Improvements
+## 🔄 API Contract with PersonalBot
 
-- **Modern Material Design 3** with dark theme
-- **Real-time status updates** showing active/inactive state
-- **Message statistics** dashboard
-- **Pause/Resume switch** for temporary control
-- **Message logs** with timestamps and status
-- **Webhook testing** built-in
-- **Better error messages** for troubleshooting
+### Request (AppNotification → PersonalBot)
+
+```json
+POST /webhook
+
+{
+  "query": {
+    "sender": "Alice",
+    "message": "Hey, are you free tonight?",
+    "isGroup": false
+  }
+}
+```
+
+### Response (PersonalBot → AppNotification)
+
+```json
+{
+  "replies": [
+    { "message": "Hey! I'm a bit busy right now, can we talk later?" }
+  ]
+}
+```
+
+The app also accepts the flat format:
+
+```json
+{ "message": "Hey! I'm a bit busy right now..." }
+```
 
 ---
 
-## 🔐 Security Notes
+## 🐛 Debugging
 
-- Contacts stored locally in SharedPreferences
-- No data sent to third parties except your configured webhook
-- Webhook URL can be changed by user
-- No sensitive data logged
+### Live logcat
+
+```bash
+adb logcat | grep -E "WA_AutoResponder|AutoResponder|BootReceiver"
+```
+
+### Common issues
+
+| Problem | Likely Cause | Fix |
+|---|---|---|
+| Service stops after a few minutes | Battery optimization is on | Disable it in Settings |
+| Messages not getting a reply | Contact not in the allowlist | Add them via the + button |
+| `Network error` in logs | Backend cold-starting on Render | Wait 30s, the retry logic will handle it |
+| Reply fires but WhatsApp shows nothing | Notification reply action unavailable | Ensure WhatsApp notifications are not snoozed or grouped |
+| Service doesn't start on reboot | `BootReceiver` not triggered | Check that `RECEIVE_BOOT_COMPLETED` permission is granted |
 
 ---
 
-## 📈 Performance Optimizations
+## 🔐 Security & Privacy
 
-- **Singleton OkHttpClient** - Better connection pooling
-- **Coroutines** - Non-blocking async operations
-- **Efficient logging** - Limited to 100 recent messages
-- **Foreground service** - Prevents system from killing the app
+- The contact allowlist is stored **locally** in SharedPreferences — never uploaded anywhere
+- The only outbound network call is the POST to your configured webhook URL (your own PersonalBot instance)
+- No third-party analytics or tracking SDKs
+- Set `AUTORESPONDER_SHARED_SECRET` on the PersonalBot side and include it in headers to lock down your endpoint
 
 ---
 
-## 🤝 Contributing
+## ⚡ Performance Notes
 
-To extend functionality:
-1. Fork the repository
-2. Create feature branch
-3. Add new features in appropriate packages
-4. Test thoroughly on multiple Android versions
-5. Submit pull request
+- Uses a **singleton OkHttpClient** for connection pooling — no new socket per message
+- All network calls run on **Kotlin Coroutines** (non-blocking, no ANR risk)
+- Message log is capped at **100 entries** to keep memory usage flat
+- Runs as a **foreground service** with a persistent notification so Android won't kill it
+
+---
+
+## 🛠 Tech Stack
+
+| Component | Technology |
+|---|---|
+| Language | Kotlin 1.9 |
+| UI | Material Design 3, View Binding |
+| Async | Kotlin Coroutines |
+| HTTP | OkHttp 4 |
+| Storage | SharedPreferences |
+| Min SDK | API 26 (Android 8.0) |
+| Target SDK | API 34 (Android 14) |
+
+---
+
+## ✅ Pre-Launch Checklist
+
+Before going live, verify every item:
+
+- [ ] Notification access granted in Android settings
+- [ ] Battery optimization disabled for this app
+- [ ] At least one contact added to the allowlist
+- [ ] Webhook test passes (green status in the app)
+- [ ] PersonalBot backend is running and reachable
+- [ ] Sent a real WhatsApp test message and checked the message log
+- [ ] Confirmed the reply appeared in the WhatsApp chat
 
 ---
 
 ## 📄 License
 
-This is an enhanced version of the original WhatsApp Auto-Responder.
-For educational purposes only. Respect WhatsApp's Terms of Service.
-
----
-
-## 🆘 Support
-
-**Need Help?**
-1. Check ISSUES_ANALYSIS.md for detailed problem explanations
-2. Review logcat output for error messages
-3. Verify all permissions are granted
-4. Test webhook connectivity manually
-
-**Key Log Tags:**
-- `WA_AutoResponder` - Main service logs
-- `AutoResponder` - Application logs
-- `BootReceiver` - Boot startup logs
-
----
-
-## ✅ Verification Checklist
-
-Before deploying:
-- [ ] All permissions granted in Android settings
-- [ ] Battery optimization disabled
-- [ ] At least one contact added
-- [ ] Webhook test passes
-- [ ] Backend is running and accessible
-- [ ] Test with a real WhatsApp message
-- [ ] Check message log for successful processing
+For educational purposes only. Use responsibly and in accordance with WhatsApp's Terms of Service.
 
 ---
 
 **Version:** 2.0 Enhanced
-**Last Updated:** February 2026
 **Minimum Android:** 8.0 (API 26)
 **Target Android:** 14 (API 34)
-#   A p p N o t i f i c a t i o n  
- 
+**Backend:** [shreyash1234566/PersonalBot](https://github.com/shreyash1234566/PersonalBot)
