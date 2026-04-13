@@ -295,5 +295,3 @@ Before deploying:
 **Last Updated:** February 2026
 **Minimum Android:** 8.0 (API 26)
 **Target Android:** 14 (API 34)
-#   A p p N o t i f i c a t i o n  
- 
